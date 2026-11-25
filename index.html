@@ -349,6 +349,44 @@
 </footer>
 
 <script>
+/* ── Anonymous visit logging ──────────────────────────────────
+   Posts only: timestamp, random sessionId, page title.
+   No personal data. Fails silently on any network error.
+   Replace the URL below with your deployed Google Apps Script URL.
+────────────────────────────────────────────────────────────── */
+(function () {
+  var GAS_LOG_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+
+  // Skip if the placeholder was never replaced
+  if (GAS_LOG_URL.indexOf("YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") !== -1) return;
+
+  try {
+    var sessionId =
+      sessionStorage.getItem("anonSid") ||
+      (function () {
+        var sid = Date.now().toString(36) + "-" +
+                  Math.random().toString(36).slice(2, 10);
+        sessionStorage.setItem("anonSid", sid);
+        return sid;
+      })();
+
+    var payload = {
+      timestamp:  new Date().toISOString(),
+      sessionId:  sessionId,
+      pageTitle:  document.title
+    };
+
+    // Use no-cors so the request fires even cross-origin;
+    // we intentionally ignore the response (fire-and-forget).
+    fetch(GAS_LOG_URL, {
+      method:  "POST",
+      mode:    "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body:    JSON.stringify(payload)
+    }).catch(function () { /* fail silently */ });
+  } catch (e) { /* fail silently */ }
+})();
+
 (function () {
   "use strict";
 
