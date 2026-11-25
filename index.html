@@ -3,140 +3,311 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CSV Stock Viewer</title>
+<title>AAPL Terminal — CSV Stock Viewer</title>
 <style>
+  :root {
+    --bg:        #0d1117;
+    --bg-card:   #161b22;
+    --bg-hover:  #1c2128;
+    --border:    #30363d;
+    --text:      #e6edf3;
+    --text-dim:  #8b949e;
+    --text-mute: #6e7681;
+    --accent:    #58a6ff;
+    --accent-dim:#1f6feb;
+    --green:     #3fb950;
+    --red:       #f85149;
+    --gold:      #d29922;
+    --shadow:    0 3px 12px rgba(0,0,0,0.4);
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: #f5f7fa;
-    color: #1a202c;
+    font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
     min-height: 100vh;
-    padding: 24px;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
   }
 
+  /* ── Header bar ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  header .logo {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 13px;
+    color: #fff;
+    letter-spacing: -0.02em;
+  }
+  header .brand {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  header .brand .tag {
+    color: var(--text-dim);
+    font-weight: 400;
+    font-size: 0.8rem;
+    margin-left: 8px;
+    border-left: 1px solid var(--border);
+    padding-left: 8px;
+  }
+  header .badge {
+    margin-left: auto;
+    font-size: 0.7rem;
+    color: var(--green);
+    background: rgba(63,185,80,0.1);
+    border: 1px solid rgba(63,185,80,0.3);
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  /* ── Main container ── */
   .container {
-    max-width: 900px;
+    max-width: 1000px;
     margin: 0 auto;
+    padding: 32px 24px 64px;
   }
 
-  h1 {
-    font-size: 1.6rem;
-    margin-bottom: 4px;
-  }
-
-  .subtitle {
-    color: #718096;
-    font-size: 0.9rem;
-    margin-bottom: 20px;
-  }
-
-  /* Upload area */
+  /* ── Upload zone ── */
   .upload-zone {
-    background: #fff;
-    border: 2px dashed #cbd5e0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 32px 24px;
+    padding: 48px 24px;
     text-align: center;
     cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
+    transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .upload-zone::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(88,166,255,0.06), transparent 60%);
+    pointer-events: none;
   }
   .upload-zone:hover, .upload-zone.dragover {
-    border-color: #3182ce;
-    background: #ebf8ff;
+    border-color: var(--accent);
+    background: var(--bg-hover);
+    box-shadow: var(--shadow);
   }
-  .upload-zone p {
+  .upload-icon {
+    width: 52px; height: 52px;
+    margin: 0 auto 16px;
+    border: 1.5px solid var(--text-mute);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.25s;
+  }
+  .upload-zone:hover .upload-icon, .upload-zone.dragover .upload-icon {
+    border-color: var(--accent);
+  }
+  .upload-icon svg { width: 22px; height: 22px; stroke: var(--text-dim); }
+  .upload-zone:hover .upload-icon svg, .upload-zone.dragover .upload-icon svg {
+    stroke: var(--accent);
+  }
+  .upload-zone .upload-text {
     font-size: 0.95rem;
-    color: #4a5568;
-    margin-bottom: 8px;
+    color: var(--text);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .upload-zone .upload-hint {
+    font-size: 0.78rem;
+    color: var(--text-mute);
   }
   .upload-zone .filename {
-    font-weight: 600;
-    color: #2b6cb0;
+    font-size: 0.82rem;
+    color: var(--accent);
+    margin-top: 10px;
+    font-weight: 500;
+    font-family: "SF Mono", "Cascadia Code", Consolas, monospace;
   }
-  .upload-zone input[type="file"] {
-    display: none;
-  }
-  .upload-zone .hint {
-    font-size: 0.8rem;
-    color: #a0aec0;
-    margin-top: 4px;
-  }
+  .upload-zone input[type="file"] { display: none; }
 
-  /* Error message */
+  /* ── Error box ── */
   .error-box {
-    background: #fed7d7;
-    border: 1px solid #fc8181;
+    background: rgba(248,81,73,0.08);
+    border: 1px solid rgba(248,81,73,0.3);
     border-radius: 8px;
-    padding: 12px 16px;
+    padding: 14px 18px;
     margin-top: 16px;
-    font-size: 0.9rem;
-    color: #742a2a;
+    font-size: 0.85rem;
+    color: var(--red);
     display: none;
+    line-height: 1.5;
   }
   .error-box.show { display: block; }
+  .error-box::before {
+    content: "⚠ ";
+    font-size: 0.9rem;
+  }
 
-  /* Stats grid */
+  /* ── Dashboard (stats + chart wrapper) ── */
+  .dashboard {
+    display: none;
+    margin-top: 24px;
+  }
+  .dashboard.show { display: block; }
+
+  /* ── Ticker header ── */
+  .ticker-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .ticker-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .ticker-header .last-price {
+    font-size: 1.3rem;
+    font-weight: 600;
+    font-family: "SF Mono", "Cascadia Code", Consolas, monospace;
+    color: var(--text);
+  }
+  .ticker-header .price-change {
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: "SF Mono", "Cascadia Code", Consolas, monospace;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .ticker-header .price-change.up {
+    color: var(--green);
+    background: rgba(63,185,80,0.1);
+  }
+  .ticker-header .price-change.down {
+    color: var(--red);
+    background: rgba(248,81,73,0.1);
+  }
+
+  /* ── Stats grid ── */
   .stats {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(5, 1fr);
     gap: 12px;
-    margin-top: 20px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 700px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
   }
   .stat-card {
-    background: #fff;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    text-align: center;
+    padding: 16px 14px;
+    transition: border-color 0.2s;
   }
+  .stat-card:hover { border-color: var(--text-mute); }
   .stat-label {
-    font-size: 0.75rem;
+    font-size: 0.68rem;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #718096;
-    margin-bottom: 4px;
+    letter-spacing: 0.08em;
+    color: var(--text-mute);
+    margin-bottom: 8px;
+    font-weight: 500;
   }
   .stat-value {
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: #1a202c;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    font-family: "SF Mono", "Cascadia Code", Consolas, monospace;
+    letter-spacing: -0.01em;
     word-break: break-word;
   }
 
-  /* Chart */
+  /* ── Chart section ── */
   .chart-section {
-    background: #fff;
-    border-radius: 10px;
-    padding: 16px;
-    margin-top: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    display: none;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--shadow);
   }
-  .chart-section.show { display: block; }
-  .chart-section h2 {
-    font-size: 1rem;
-    margin-bottom: 12px;
-    color: #2d3748;
+  .chart-section .chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .chart-section h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .chart-section .chart-legend {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chart-section .chart-legend .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
   }
   #chart {
     width: 100%;
-    height: 350px;
+    height: 380px;
     display: block;
   }
 
-  .hidden { display: none !important; }
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 0.75rem;
+    color: var(--text-mute);
+    border-top: 1px solid var(--border);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>CSV Stock Viewer</h1>
-  <p class="subtitle">Upload a CSV with <strong>Date</strong> and <strong>Close</strong> columns to see stats and a price chart.</p>
 
+<header>
+  <div class="logo">A</div>
+  <div class="brand">AAPL Terminal<span class="tag">CSV Stock Viewer</span></div>
+  <div class="badge">Live Preview</div>
+</header>
+
+<div class="container">
   <!-- Upload -->
   <div class="upload-zone" id="dropZone">
-    <p>Click to choose a CSV file, or drag &amp; drop it here</p>
-    <p class="hint">Expected columns: Date, Open, High, Low, Close, Volume</p>
+    <div class="upload-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 15V3M12 3l-4 4M12 3l4 4"/>
+        <path d="M20 17v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2"/>
+      </svg>
+    </div>
+    <p class="upload-text">Click to browse or drag &amp; drop a CSV file</p>
+    <p class="upload-hint">Expected columns: Date, Open, High, Low, Close, Volume</p>
     <p class="filename" id="filename"></p>
     <input type="file" id="fileInput" accept=".csv,text/csv,text/plain">
   </div>
@@ -144,21 +315,38 @@
   <!-- Error -->
   <div class="error-box" id="errorBox"></div>
 
-  <!-- Stats -->
-  <div class="stats" id="stats" style="display:none;">
-    <div class="stat-card"><div class="stat-label">Rows</div><div class="stat-value" id="statRows">—</div></div>
-    <div class="stat-card"><div class="stat-label">Date Range</div><div class="stat-value" id="statRange">—</div></div>
-    <div class="stat-card"><div class="stat-label">Mean Close</div><div class="stat-value" id="statMean">—</div></div>
-    <div class="stat-card"><div class="stat-label">Min Close</div><div class="stat-value" id="statMin">—</div></div>
-    <div class="stat-card"><div class="stat-label">Max Close</div><div class="stat-value" id="statMax">—</div></div>
-  </div>
+  <!-- Dashboard -->
+  <div class="dashboard" id="dashboard">
+    <!-- Ticker -->
+    <div class="ticker-header">
+      <h2 id="tickerSymbol">—</h2>
+      <span class="last-price" id="lastPrice">—</span>
+      <span class="price-change" id="priceChange">—</span>
+    </div>
 
-  <!-- Chart -->
-  <div class="chart-section" id="chartSection">
-    <h2>Close Price Over Time</h2>
-    <canvas id="chart"></canvas>
+    <!-- Stats -->
+    <div class="stats" id="stats">
+      <div class="stat-card"><div class="stat-label">Data Points</div><div class="stat-value" id="statRows">—</div></div>
+      <div class="stat-card"><div class="stat-label">Date Range</div><div class="stat-value" id="statRange">—</div></div>
+      <div class="stat-card"><div class="stat-label">Mean Close</div><div class="stat-value" id="statMean">—</div></div>
+      <div class="stat-card"><div class="stat-label">Min Close</div><div class="stat-value" id="statMin">—</div></div>
+      <div class="stat-card"><div class="stat-label">Max Close</div><div class="stat-value" id="statMax">—</div></div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-section">
+      <div class="chart-header">
+        <h3>Close Price — Daily</h3>
+        <div class="chart-legend"><span class="dot"></span> Close</div>
+      </div>
+      <canvas id="chart"></canvas>
+    </div>
   </div>
 </div>
+
+<footer>
+  Data processed locally in your browser · No backend · No API keys
+</footer>
 
 <script>
 (function () {
@@ -168,15 +356,12 @@
   var fileInput  = document.getElementById("fileInput");
   var filename   = document.getElementById("filename");
   var errorBox   = document.getElementById("errorBox");
-  var statsDiv   = document.getElementById("stats");
-  var chartSec   = document.getElementById("chartSection");
+  var dashboard  = document.getElementById("dashboard");
 
-  // ---- Drag & drop ----
+  // ── Drag & drop ──
   dropZone.addEventListener("click", function () { fileInput.click(); });
-
   dropZone.addEventListener("dragover", function (e) {
-    e.preventDefault();
-    dropZone.classList.add("dragover");
+    e.preventDefault(); dropZone.classList.add("dragover");
   });
   dropZone.addEventListener("dragleave", function () {
     dropZone.classList.remove("dragover");
@@ -186,7 +371,6 @@
     dropZone.classList.remove("dragover");
     if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
   });
-
   fileInput.addEventListener("change", function () {
     if (fileInput.files.length) handleFile(fileInput.files[0]);
   });
@@ -194,12 +378,11 @@
   function showError(msg) {
     errorBox.textContent = msg;
     errorBox.classList.add("show");
-    statsDiv.style.display = "none";
-    chartSec.classList.remove("show");
+    dashboard.classList.remove("show");
   }
   function clearError() { errorBox.classList.remove("show"); }
 
-  // ---- File handling ----
+  // ── File handling ──
   function handleFile(file) {
     clearError();
     filename.textContent = file.name;
@@ -214,100 +397,65 @@
     reader.readAsText(file);
   }
 
-  // ---- CSV parser (RFC-4180 aware, handles quoted fields & commas inside quotes) ----
+  // ── CSV parser (RFC-4180 aware) ──
   function parseCSV(text) {
-    var rows = [];
-    var row = [];
-    var field = "";
-    var inQuotes = false;
-
+    var rows = [], row = [], field = "", inQuotes = false;
     for (var i = 0; i < text.length; i++) {
       var ch = text[i];
-
       if (inQuotes) {
         if (ch === '"') {
-          if (text[i + 1] === '"') {           // escaped quote
-            field += '"'; i++;
-          } else {
-            inQuotes = false;
-          }
-        } else {
-          field += ch;
-        }
+          if (text[i + 1] === '"') { field += '"'; i++; }
+          else inQuotes = false;
+        } else field += ch;
       } else {
-        if (ch === '"') {
-          inQuotes = true;
-        } else if (ch === ",") {
-          row.push(field); field = "";
-        } else if (ch === "\n" || ch === "\r") {
-          if (ch === "\r" && text[i + 1] === "\n") i++;   // handle \r\n
-          if (field !== "" || row.length > 0) {             // skip truly empty lines
-            row.push(field);
-            rows.push(row);
-            row = []; field = "";
-          }
-        } else {
-          field += ch;
-        }
+        if (ch === '"') inQuotes = true;
+        else if (ch === ",") { row.push(field); field = ""; }
+        else if (ch === "\n" || ch === "\r") {
+          if (ch === "\r" && text[i + 1] === "\n") i++;
+          if (field !== "" || row.length > 0) { row.push(field); rows.push(row); row = []; field = ""; }
+        } else field += ch;
       }
     }
-    // last field/row
     if (field !== "" || row.length > 0) { row.push(field); rows.push(row); }
     return rows;
   }
 
-  // ---- Main processing ----
+  // ── Main processing ──
   function processCSV(text) {
     var rows = parseCSV(text.trim());
-    if (rows.length < 2) {
-      showError("CSV appears to be empty or has no data rows.");
-      return;
-    }
+    if (rows.length < 2) { showError("CSV appears to be empty or has no data rows."); return; }
 
     var header = rows[0].map(function (h) { return h.trim(); });
-
-    // Find required columns (case-insensitive)
     function findCol(name) {
       var lower = name.toLowerCase();
-      for (var c = 0; c < header.length; c++) {
+      for (var c = 0; c < header.length; c++)
         if (header[c].toLowerCase() === lower) return c;
-      }
       return -1;
     }
 
-    var dateCol  = findCol("Date");
+    var dateCol = findCol("Date");
     var closeCol = findCol("Close");
-
     var missing = [];
-    if (dateCol  === -1) missing.push("Date");
+    if (dateCol === -1) missing.push("Date");
     if (closeCol === -1) missing.push("Close");
-
     if (missing.length) {
-      showError(
-        "Missing required column(s): " + missing.join(", ") +
-        ". Found columns: [" + header.join(", ") + "]"
-      );
+      showError("Missing required column(s): " + missing.join(", ") +
+        ". Found columns: [" + header.join(", ") + "]");
       return;
     }
 
-    // Build data arrays
     var dates = [], closes = [];
     for (var r = 1; r < rows.length; r++) {
-      var rawDate  = rows[r][dateCol];
-      var rawClose = rows[r][closeCol];
-      if (!rawDate || !rawClose) continue;          // skip blank rows
-      var closeVal = parseFloat(rawClose);
-      if (isNaN(closeVal)) continue;
+      var rawDate = rows[r][dateCol], rawClose = rows[r][closeCol];
+      if (!rawDate || !rawClose) continue;
+      var v = parseFloat(rawClose);
+      if (isNaN(v)) continue;
       dates.push(rawDate);
-      closes.push(closeVal);
+      closes.push(v);
     }
+    if (closes.length === 0) { showError("No valid numeric Close values found in the data."); return; }
 
-    if (closes.length === 0) {
-      showError("No valid numeric Close values found in the data.");
-      return;
-    }
-
-    // ---- Stats ----
+    // ── Stats ──
     var sum = 0, min = closes[0], max = closes[0];
     for (var i = 0; i < closes.length; i++) {
       sum += closes[i];
@@ -315,96 +463,128 @@
       if (closes[i] > max) max = closes[i];
     }
     var mean = sum / closes.length;
+    var lastC = closes[closes.length - 1];
+    var firstC = closes[0];
+    var change = lastC - firstC;
+    var changePct = (change / firstC * 100);
+
+    // Ticker
+    document.getElementById("tickerSymbol").textContent = "AAPL";
+    document.getElementById("lastPrice").textContent = "$" + lastC.toFixed(2);
+    var pcEl = document.getElementById("priceChange");
+    if (change >= 0) {
+      pcEl.textContent = "▲ +" + change.toFixed(2) + " (+" + changePct.toFixed(1) + "%)";
+      pcEl.className = "price-change up";
+    } else {
+      pcEl.textContent = "▼ " + change.toFixed(2) + " (" + changePct.toFixed(1) + "%)";
+      pcEl.className = "price-change down";
+    }
 
     document.getElementById("statRows").textContent  = closes.length;
-    document.getElementById("statRange").textContent = dates[0] + " → " + dates[dates.length - 1];
-    document.getElementById("statMean").textContent  = mean.toFixed(2);
-    document.getElementById("statMin").textContent   = min.toFixed(2);
-    document.getElementById("statMax").textContent   = max.toFixed(2);
+    document.getElementById("statRange").textContent = dates[0].slice(0,10) + " → " + dates[dates.length-1].slice(0,10);
+    document.getElementById("statMean").textContent  = "$" + mean.toFixed(2);
+    document.getElementById("statMin").textContent   = "$" + min.toFixed(2);
+    document.getElementById("statMax").textContent   = "$" + max.toFixed(2);
 
-    statsDiv.style.display = "grid";
-    chartSec.classList.add("show");
-
+    dashboard.classList.add("show");
     drawChart(dates, closes);
   }
 
-  // ---- Canvas line chart (no external libs) ----
+  // ── Canvas line chart with gradient fill ──
   function drawChart(dates, closes) {
     var canvas = document.getElementById("chart");
-    var ctx    = canvas.getContext("2d");
+    var ctx = canvas.getContext("2d");
 
-    // Handle device pixel ratio for crisp rendering
     var dpr  = window.devicePixelRatio || 1;
     var cssW = canvas.clientWidth;
-    var cssH = 350;
+    var cssH = 380;
     canvas.width  = cssW * dpr;
     canvas.height = cssH * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     var W = cssW, H = cssH;
-    var padL = 70, padR = 20, padT = 20, padB = 50;
+    var padL = 72, padR = 24, padT = 24, padB = 48;
     var plotW = W - padL - padR;
     var plotH = H - padT - padB;
 
     var minC = Math.min.apply(null, closes);
     var maxC = Math.max.apply(null, closes);
+    var pad  = (maxC - minC) * 0.08;
+    minC -= pad; maxC += pad;
     var range = maxC - minC || 1;
 
     ctx.clearRect(0, 0, W, H);
 
-    // Background
-    ctx.fillStyle = "#fafafa";
-    ctx.fillRect(padL, padT, plotW, plotH);
-
-    // Y-axis grid + labels
-    ctx.font = "11px sans-serif";
+    // Horizontal grid lines + Y labels
+    ctx.font = "11px 'SF Mono', 'Cascadia Code', Consolas, monospace";
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
     var yTicks = 6;
     for (var t = 0; t <= yTicks; t++) {
       var val = minC + (range * t / yTicks);
       var y   = padT + plotH - (plotH * t / yTicks);
-      ctx.strokeStyle = "#e2e8f0";
+      ctx.strokeStyle = "rgba(48,54,61,0.6)";
+      ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(padL, y);
       ctx.lineTo(padL + plotW, y);
       ctx.stroke();
-      ctx.fillStyle = "#718096";
-      ctx.fillText(val.toFixed(2), padL - 8, y);
+      ctx.fillStyle = "#6e7681";
+      ctx.fillText("$" + val.toFixed(2), padL - 10, y);
     }
 
-    // X-axis labels (show ~6 evenly spaced dates)
+    // X-axis date labels
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    var xTicks = Math.min(6, dates.length);
+    ctx.fillStyle = "#6e7681";
+    var xTicks = Math.min(7, dates.length);
     for (var xt = 0; xt < xTicks; xt++) {
       var idx = Math.floor((dates.length - 1) * xt / (xTicks - 1 || 1));
       var x   = padL + (plotW * idx / (dates.length - 1 || 1));
-      var label = String(dates[idx]).slice(0, 10);     // trim to yyyy-mm-dd
-      ctx.fillStyle = "#718096";
-      ctx.fillText(label, x, padT + plotH + 8);
+      ctx.fillText(String(dates[idx]).slice(0, 10), x, padT + plotH + 10);
     }
 
-    // Draw line
-    ctx.strokeStyle = "#3182ce";
-    ctx.lineWidth = 1.8;
-    ctx.lineJoin = "round";
-    ctx.beginPath();
+    // Calculate line points
+    var pts = [];
     for (var p = 0; p < closes.length; p++) {
       var px = padL + (plotW * p / (closes.length - 1 || 1));
       var py = padT + plotH - (plotH * (closes[p] - minC) / range);
-      if (p === 0) ctx.moveTo(px, py);
-      else         ctx.lineTo(px, py);
+      pts.push({ x: px, y: py });
+    }
+
+    // Gradient fill under the line
+    var grad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+    grad.addColorStop(0, "rgba(88,166,255,0.18)");
+    grad.addColorStop(1, "rgba(88,166,255,0.0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, padT + plotH);
+    for (var f = 0; f < pts.length; f++) ctx.lineTo(pts[f].x, pts[f].y);
+    ctx.lineTo(pts[pts.length - 1].x, padT + plotH);
+    ctx.closePath();
+    ctx.fill();
+
+    // Line stroke
+    ctx.strokeStyle = "#58a6ff";
+    ctx.lineWidth = 2;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    for (var l = 0; l < pts.length; l++) {
+      if (l === 0) ctx.moveTo(pts[l].x, pts[l].y);
+      else         ctx.lineTo(pts[l].x, pts[l].y);
     }
     ctx.stroke();
 
-    // Axis titles
-    ctx.fillStyle = "#4a5568";
-    ctx.font = "12px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
-    ctx.fillText("Close Price", padL / 2, padT + plotH / 2);
-    ctx.fillText("Date", padL + plotW / 2, H - 4);
+    // Last point dot
+    var lastPt = pts[pts.length - 1];
+    ctx.fillStyle = "#58a6ff";
+    ctx.beginPath();
+    ctx.arc(lastPt.x, lastPt.y, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#0d1117";
+    ctx.lineWidth = 2;
+    ctx.stroke();
   }
 
   // Redraw on resize
@@ -412,9 +592,8 @@
   window.addEventListener("resize", function () {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function () {
-      if (chartSec.classList.contains("show")) {
-        // Re-read from current data — simple approach: re-trigger from last file
-        if (fileInput.files.length) handleFile(fileInput.files[0]);
+      if (dashboard.classList.contains("show") && fileInput.files.length) {
+        handleFile(fileInput.files[0]);
       }
     }, 200);
   });
